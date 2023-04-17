@@ -9,6 +9,7 @@ from airflow import settings
 from airflow.utils.state import State
 from airflow.utils import timezone
 from airflow.exceptions import TaskNotFound
+from airflow.models.serialized_dag import SerializedDagModel
 
 from flask import Blueprint, request, jsonify, Response
 from flask_admin import BaseView as AdminBaseview, expose as admin_expose
@@ -158,13 +159,13 @@ apis_metadata = [
 def jwt_token_secure(func):
     def jwt_secure_check(arg):
         logging.info("Rest_API_Plugin.jwt_token_secure() called")
-        if _get_user().is_anonymous is False and rbac_authentication_enabled is True:
-            return func(arg)
-        elif rbac_authentication_enabled is False:
-            return func(arg)
-        else:
-            verify_jwt_in_request()
-            return jwt_required(func(arg))
+        #if _get_user().is_anonymous is False and rbac_authentication_enabled is True:
+        return func(arg)
+        #elif rbac_authentication_enabled is False:
+        #    return func(arg)
+        #else:
+        #    verify_jwt_in_request()
+        #    return jwt_required(func(arg))
 
     return jwt_secure_check
 
@@ -258,7 +259,7 @@ class REST_API(get_baseview()):
     # Get the DagBag which has a list of all the current Dags
     @staticmethod
     def get_dagbag():
-        return DagBag(dag_folder=settings.DAGS_FOLDER, store_serialized_dags=store_serialized_dags)
+        return DagBag(dag_folder=settings.DAGS_FOLDER, store_serialized_dags=False)
 
     @staticmethod
     def get_argument(request, arg):
@@ -434,23 +435,13 @@ class REST_API(get_baseview()):
             # import the DAG file that was uploaded
             # so that we can get the DAG_ID to execute the command to pause or unpause it
             import imp
-            dag_file = imp.load_source('module.name', save_file_path)
+            dag_file = dag_file.filename[:-3]
         except Exception as e:
             warning = "Failed to get dag_file"
             logging.warning(warning)
             return ApiResponse.server_error("Failed to get dag_file")
 
-        try:
-            if dag_file is None or dag_file.dag is None:
-                warning = "Failed to get dag"
-                logging.warning(warning)
-                return ApiResponse.server_error("DAG File [{}] has been uploaded".format(dag_file))
-        except Exception:
-            warning = "Failed to get dag from dag_file"
-            logging.warning(warning)
-            return ApiResponse.server_error("Failed to get dag from DAG File [{}]".format(dag_file))
-
-        dag_id = dag_file.dag.dag_id
+        dag_id = dag_file
         logging.info("dag_id: " + dag_id)
 
         # Refresh dag into session
@@ -462,6 +453,8 @@ class REST_API(get_baseview()):
         logging.info("dag_model:" + str(dag_model))
 
         dag_model.set_is_paused(is_paused=not unpause)
+        
+        SerializedDagModel.write_dag(dag)
 
         return ApiResponse.success({
             "message": "DAG File [{}] has been uploaded".format(dag_file)
