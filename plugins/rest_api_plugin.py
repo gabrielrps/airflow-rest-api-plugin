@@ -358,10 +358,10 @@ class REST_API(get_baseview()):
             return ApiResponse.bad_request("The argument(s) " + str(missing_required_arguments) + " are required")
 
         # Check to make sure that the DAG you're referring to, already exists.
-        dag_bag = self.get_dagbag()
-        if dag_id is not None and dag_id not in dag_bag.dags:
-            logging.info("DAG_ID '" + str(dag_id) + "' was not found in the DagBag list '" + str(dag_bag.dags) + "'")
-            return ApiResponse.bad_request("The DAG ID '" + str(dag_id) + "' does not exist")
+        #dag_bag = self.get_dagbag()
+        #if dag_id is not None and dag_id not in dag_bag.dags:
+        #    logging.info("DAG_ID '" + str(dag_id) + "' was not found in the DagBag list '" + str(dag_bag.dags) + "'")
+        #    return ApiResponse.bad_request("The DAG ID '" + str(dag_id) + "' does not exist")
 
         # Deciding which function to use based off the API object that was requested.
         # Some functions are custom and need to be manually routed to.
@@ -449,10 +449,9 @@ class REST_API(get_baseview()):
         dag = dagbag.get_dag(dag_id)
         session = settings.Session()
         dag.sync_to_db(session=session)
-        dag_model = session.query(DagModel).filter(DagModel.dag_id == dag_id).first()
-        logging.info("dag_model:" + str(dag_model))
-
-        dag_model.set_is_paused(is_paused=not unpause)
+        #dag_model = session.query(DagModel).filter(DagModel.dag_id == dag_id).first()
+        #logging.info("dag_model:" + str(dag_model))
+        #dag_model.set_is_paused(is_paused=not unpause)
         
         SerializedDagModel.write_dag(dag)
 
