@@ -15,6 +15,7 @@ from flask import Blueprint, request, jsonify, Response
 from flask_admin import BaseView as AdminBaseview, expose as admin_expose
 from flask_login.utils import _get_user
 
+import gc
 import airflow
 import logging
 import os
@@ -151,7 +152,13 @@ apis_metadata = [
             {"name": "run_id", "description": "The id of the dagRun", "form_input_type": "text", "required": True},
             {"name": "task_id", "description": "The id of the task", "form_input_type": "text", "required": True}
         ]
-    }
+    },
+    {
+        "name": "prova",
+        "description": "prova",
+        "http_method": "GET",
+        "arguments": []
+    },
 ]
 
 
@@ -385,6 +392,8 @@ class REST_API(get_baseview()):
             final_response = self.run_task_instance()
         elif api == "skip_task_instance":
             final_response = self.skip_task_instance()
+        elif api == "prova":
+            final_response = self.prova()
 
         return final_response
 
@@ -857,6 +866,11 @@ class REST_API(get_baseview()):
         session.close()
 
         return ApiResponse.success()
+
+    def prova(self):
+        return ApiResponse.success({
+            "gc_stats": gc.get_stats()
+        })
 
 
 # Creating View to be used by Plugin
