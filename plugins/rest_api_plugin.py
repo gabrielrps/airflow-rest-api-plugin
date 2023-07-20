@@ -868,6 +868,7 @@ class REST_API(get_baseview()):
         return ApiResponse.success()
 
     def prova(self):
+        gc.collect()
         return ApiResponse.success({
             "gc_stats": gc.get_stats()
         })
